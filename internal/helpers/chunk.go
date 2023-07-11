@@ -7,7 +7,7 @@ func ChunkByMaxLen[T any](arr []T, length int) (result [][]T) {
 			result = append(result, arr[start:start+length])
 			start += length
 		} else {
-			if len(arr)%length > 0 {
+			if len(arr)-start > 0 {
 				result = append(result, arr[start:])
 			}
 			break
