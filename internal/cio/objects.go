@@ -44,7 +44,7 @@ func (cio *CIO) CreateOrUpdateClasses(classes []courses.Course) []byte {
 func (cio *CIO) RelateUsersWithCourseObjects(
 	lmsUsers []courses.UserWithActiveCourses,
 	cioUsers []helpers.Customer,
-) <-chan int {
+) RelationReturn {
 	cache := map[string][]string{}
 	var relatedCustomers []relateCustomerItem
 	for i := 0; i < len(lmsUsers); i++ {
@@ -64,8 +64,7 @@ func (cio *CIO) RelateUsersWithCourseObjects(
 
 	batchSize := 500
 	chunked := helpers.ChunkByMaxLen(relatedCustomers, batchSize)
-	progress := make(chan int)
-	count := 0
+	progress := make(chan RelationProgress)
 	object_type_id := cio.getCoursesObjectTypeId()
 	go func() {
 		defer close(progress)
@@ -98,10 +97,15 @@ func (cio *CIO) RelateUsersWithCourseObjects(
 			if err != nil {
 				panic(err)
 			}
-			cio.trackRequest("/api/v2/batch", bytes.NewReader(bodyJson))
-			count += len(chunk)
-			progress <- count
+			ret := cio.trackRequest("/api/v2/batch", bytes.NewReader(bodyJson))
+			progress <- RelationProgress{
+				ChunkLen: len(chunk),
+				CioRet:   ret,
+			}
 		}
 	}()
-	return progress
+	return RelationReturn{
+		TotalItems: len(relatedCustomers),
+		Progress:   progress,
+	}
 }

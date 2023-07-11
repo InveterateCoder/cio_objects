@@ -14,3 +14,13 @@ type relateCustomerItem struct {
 	CioID      string   `json:"cio_id"`
 	CoursesIds []string `json:"courses"`
 }
+
+type RelationProgress struct {
+	ChunkLen int
+	CioRet   []byte
+}
+
+type RelationReturn struct {
+	Progress   <-chan RelationProgress
+	TotalItems int
+}
